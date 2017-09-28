@@ -1,0 +1,26 @@
+{
+    "name": "faris/logcollector-service-provider",
+    "type": "library",
+    "description": "通过日志统一收集事件，同时记录每一个请求",
+    "keywords": ["日志收集", "事件", "记录请求"],
+    "homepage": "https://github.com/xFaris/logcollector-service-provider",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "faris",
+            "email": "faris2017@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "monolog/monolog": "*",
+        "illuminate/config": "~5.0",
+        "illuminate/support": "~5.0",
+        "webpatser/laravel-uuid": "2.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Faris\\LogCollector\\": "src/"
+        }
+    }
+}
