@@ -22,5 +22,6 @@
         "psr-4": {
             "Faris\\LogCollector\\": "src/"
         }
-    }
+    },
+    "minimum-stability": "stable"	
 }
