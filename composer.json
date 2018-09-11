@@ -1,5 +1,5 @@
 {
-    "name": "listen/logcollector-service-provider",
+    "name": "listen/logcollector",
     "type": "library",
     "description": "通过日志统一收集事件，同时记录每一个请求",
     "keywords": ["日志收集", "事件", "记录请求"],
