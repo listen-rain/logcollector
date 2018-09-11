@@ -1,12 +1,11 @@
 <?php
 
-namespace Faris\LogCollector;
+namespace Listen\LogCollector;
 
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Processor\WebProcessor;
-use Monolog\Processor\IntrospectionProcessor;
 use Illuminate\Config\Repository;
 use Webpatser\Uuid\Uuid;
 

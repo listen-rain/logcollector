@@ -1,6 +1,6 @@
 <?php
 
-namespace Faris\LogCollector\Middleware;
+namespace Listen\LogCollector\Middleware;
 
 use Closure;
 

@@ -1,3 +1,2 @@
-# Logcollector-service-provider with Laravel
+# Logcollector
 
-# From xFaris/logcollector-service-provider 

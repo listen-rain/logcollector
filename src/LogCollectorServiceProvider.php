@@ -1,6 +1,6 @@
 <?php
 
-namespace Faris\LogCollector;
+namespace Listen\LogCollector;
 
 use Illuminate\Support\ServiceProvider;
 

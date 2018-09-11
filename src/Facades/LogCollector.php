@@ -1,6 +1,6 @@
 <?php
 
-namespace Faris\LogCollector\Facades;
+namespace Listen\LogCollector\Facades;
 
 use Illuminate\Support\Facades\Facade;
 

@@ -1,14 +1,14 @@
 {
-    "name": "listen-rain/logcollector-service-provider",
+    "name": "listen/logcollector-service-provider",
     "type": "library",
     "description": "通过日志统一收集事件，同时记录每一个请求",
     "keywords": ["日志收集", "事件", "记录请求"],
-    "homepage": "https://github.com/listen-rain/logcollector-service-provider",
+    "homepage": "https://github.com/listen-rain/logcollector",
     "license": "MIT",
     "authors": [
         {
-            "name": "faris",
-            "email": "faris2017@qq.com"
+            "name": "zhufengwei",
+            "email": "m15275049388@163.com"
         }
     ],
     "require": {
@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Faris\\LogCollector\\": "src/"
+            "Listen\\LogCollector\\": "src/"
         }
     },
     "minimum-stability": "stable"
