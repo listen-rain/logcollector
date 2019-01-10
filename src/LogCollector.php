@@ -14,11 +14,12 @@ class LogCollector
     protected $accessLogger;
     protected $eventLogger;
     protected $config;
+    protected $lineFormatter;
 
     protected $product;
     protected $serviceName;
     protected $prefix;
-    protected $logInfo;
+    protected $logInfo = [];
     protected $startTime;
     protected $requestId;
 
@@ -28,68 +29,46 @@ class LogCollector
 
     public function __construct(Repository $config)
     {
-        $this->config = $config;
+        $this->config        = $config;
+        $this->lineFormatter = new LineFormatter("[%datetime%] [%level_name%] %channel% - %message% %extra%\n");
 
         //info logger
         $this->accessLogger = new Logger($this->config->get('logcollector.access.log_channel'));
         $accessRotate       = new RotatingFileHandler($this->config->get('logcollector.access.file_name'), Logger::INFO);
-        $accessRotate->setFormatter(new LineFormatter("[%datetime%] [%level_name%] %channel% - %message% %extra%\n"));
+        $accessRotate->setFormatter($this->lineFormatter);
         $this->accessLogger->pushHandler($accessRotate);
 
         //event logger
         $this->eventLogger = new Logger($this->config->get('logcollector.event.log_channel'));
         $eventRotate       = new RotatingFileHandler($this->config->get('logcollector.event.file_name'), Logger::INFO);
-        $eventRotate->setFormatter(new LineFormatter("[%datetime%] [%level_name%] %channel% - %message% %extra%\n"));
+        $eventRotate->setFormatter($this->lineFormatter);
         $this->eventLogger->pushHandler($eventRotate);
 
 
         //exception logger
-        $exception_channel =
-            $this->config->has('logcollector.exception.log_channel') ?
-                $this->config->get('logcollector.exception.log_channel') : 'EXCEPTION';
-
+        $exception_channel     = $this->config->get('logcollector.exception.log_channel', 'EXCEPTION');
+        $exception_file        = $this->config->get('logcollector.exception.file_name', base_path("../logs/" . $this->config->get('logcollector.service_name') . '.exception.log'));
         $this->exceptionLogger = new Logger($exception_channel);
-        $exception_file        =
-            $this->config->has('logcollector.exception.file_name')
-                ?
-                $this->config->get('logcollector.exception.file_name')
-                :
-                base_path("../logs/" . $this->config->get('logcollector.service_name') . '.exception.log');
 
         $errorRotate = new RotatingFileHandler($exception_file, Logger::INFO);
-        $errorRotate->setFormatter(new LineFormatter("[%datetime%] [%level_name%] %channel% - %message% %extra%\n"));
+        $errorRotate->setFormatter($this->lineFormatter);
         $this->exceptionLogger->pushHandler($errorRotate);
 
         //add info
-        $extraFields  = [
+        $webProcessor = new WebProcessor(null, [
             'url'         => 'REQUEST_URI',
             'http_method' => 'REQUEST_METHOD',
             'server'      => 'SERVER_NAME',
             'referrer'    => 'HTTP_REFERER',
-        ];
-        $webProcessor = new WebProcessor(null, $extraFields);
-        //$codeProcessor = new IntrospectionProcessor();
+        ]);
         $this->accessLogger->pushProcessor($webProcessor);
-        //$this->eventLogger->pushProcessor($webProcessor);
 
         //basic info
-        if ($this->config->has('logcollector.product')) {
-            $this->product = $this->config->get('logcollector.product');
-        } else {
-            $this->product = 'logcollector';
-        }
-
-        if ($this->config->has('logcollector.service_name')) {
-            $this->serviceName = $this->config->get('logcollector.service_name');
-        } else {
-            $this->serviceName = 'server';
-        }
-
-        $this->startTime = defined(LARAVEL_START) ? LARAVEL_START * 1000 : microtime(true);
-        $this->requestId = (string)Uuid::generate(4);
-
-        $this->logInfo = [];
-        $this->prefix  = $this->product . " " . $this->serviceName;
+        $this->product     = $this->config->get('logcollector.product', 'logcollector');
+        $this->serviceName = $this->config->get('logcollector.service_name', 'server');
+        $this->startTime   = microtime(true);
+        $this->requestId   = (string)Uuid::generate(4);
+        $this->prefix      = $this->product . " " . $this->serviceName;
     }
 
     public function addLogInfo($key, $value)
@@ -134,16 +113,9 @@ class LogCollector
 
     public function logException($exceptionName, $msg, $dingtalk_token = '')
     {
-        $this->exceptionName  = $exceptionName;
-        $this->exceptionMsg   = $msg;
-        $this->exceptionToken = '32c2a4305bb3b302551d0a308901b0b81d7f2e64ba0e0deff09665f7e9f58a54';
-        if ($this->config->has('logcollector.exception.dingtalk_token')) {
-            $this->exceptionToken = $this->config->get('logcollector.exception.dingtalk_token');
-        }
-        if (!empty($dingtalk_token)) {
-            $this->exceptionToken = $dingtalk_token;
-        }
-
+        $this->exceptionName = $exceptionName;
+        $this->exceptionMsg  = $msg;
+        $this->exceptionToken = $this->config->get('logcollector.exception.dingtalk_token');
         $this->exceptionLogger->pushProcessor(function ($record) {
             $record['extra']['request_id']      = $this->requestId;
             $record['extra']['exception_name']  = $this->exceptionName;
