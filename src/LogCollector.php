@@ -2,6 +2,7 @@
 
 namespace Listen\LogCollector;
 
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Formatter\LineFormatter;
@@ -81,7 +82,21 @@ class LogCollector
         return true;
     }
 
-    public function logAfterRequest()
+    public function makeLogger(string $fileName, string $channel, \Closure $processor)
+    {
+        $logger = new Logger($channel);
+
+        try {
+            $logger->pushHandler(new StreamHandler($fileName, Logger::INFO, false));
+        } catch (\Exception $e) {
+            $logger->info('pushHandlerError', $e->getMessage());
+        }
+
+        $logger->pushProcessor($processor);
+        return $logger;
+    }
+
+    public function logAccess()
     {
         $this->accessLogger->pushProcessor(function ($record) {
             $record['extra']                  = array_merge($this->logInfo, $record['extra']);
@@ -113,8 +128,8 @@ class LogCollector
 
     public function logException($exceptionName, $msg, $dingtalk_token = '')
     {
-        $this->exceptionName = $exceptionName;
-        $this->exceptionMsg  = $msg;
+        $this->exceptionName  = $exceptionName;
+        $this->exceptionMsg   = $msg;
         $this->exceptionToken = $this->config->get('logcollector.exception.dingtalk_token');
         $this->exceptionLogger->pushProcessor(function ($record) {
             $record['extra']['request_id']      = $this->requestId;

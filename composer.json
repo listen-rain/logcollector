@@ -13,7 +13,7 @@
         }
     ],
     "require": {
-        "php": ">=5.4",
+        "php": "~7.1",
         "monolog/monolog": "*",
         "illuminate/config": "~5.0",
         "illuminate/support": "~5.0",
