@@ -2,7 +2,6 @@
 
 namespace Listen\LogCollector;
 
-use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Formatter\LineFormatter;
@@ -12,97 +11,105 @@ use Webpatser\Uuid\Uuid;
 
 class LogCollector
 {
-    protected $accessLogger;
-    protected $eventLogger;
-    protected $config;
-    protected $lineFormatter;
-
-    protected $product;
-    protected $serviceName;
-    protected $prefix;
-    protected $logInfo = [];
-    protected $startTime;
-    protected $requestId;
-
-    protected $eventName;
-    protected $eventInfo;
-    protected $eventUserId;
+    protected        $config;
+    protected        $lineFormatter;
+    protected        $prefix;
+    protected        $startTime;
+    protected        $requestId;
+    protected        $logInfo  = array();
+    protected static $loggeies = [];
 
     public function __construct(Repository $config)
     {
-        $this->config        = $config;
-        $this->lineFormatter = new LineFormatter("[%datetime%] [%level_name%] %channel% - %message% %extra%\n");
+        $this->config = $config;
+        $this->setBaseInfo();
+        $this->setLineFormater();
+        $this->setLoggeies();
+    }
 
-        //info logger
-        $this->accessLogger = new Logger($this->config->get('logcollector.access.log_channel'));
-        $accessRotate       = new RotatingFileHandler($this->config->get('logcollector.access.file_name'), Logger::INFO);
-        $accessRotate->setFormatter($this->lineFormatter);
-        $this->accessLogger->pushHandler($accessRotate);
+    public function setBaseInfo()
+    {
+        $product         = $this->config->get('logcollector.product', 'logcollector');
+        $serviceName     = $this->config->get('logcollector.service_name', 'server');
+        $this->prefix    = $product . "." . $serviceName;
+        $this->startTime = microtime(true);
+        $this->requestId = (string)Uuid::generate(4);
+    }
 
-        //event logger
-        $this->eventLogger = new Logger($this->config->get('logcollector.event.log_channel'));
-        $eventRotate       = new RotatingFileHandler($this->config->get('logcollector.event.file_name'), Logger::INFO);
-        $eventRotate->setFormatter($this->lineFormatter);
-        $this->eventLogger->pushHandler($eventRotate);
+    public function setLineFormater()
+    {
+        $formater = $this->config->get(
+            'logcollector.formater',
+            '[%datetime%] %channel%.%level_name%: %message% %extra%\n'
+        );
 
+        $this->lineFormatter = new LineFormatter($formater);
+    }
 
-        //exception logger
-        $exception_channel     = $this->config->get('logcollector.exception.log_channel', 'EXCEPTION');
-        $exception_file        = $this->config->get('logcollector.exception.file_name', base_path("../logs/" . $this->config->get('logcollector.service_name') . '.exception.log'));
-        $this->exceptionLogger = new Logger($exception_channel);
-
-        $errorRotate = new RotatingFileHandler($exception_file, Logger::INFO);
-        $errorRotate->setFormatter($this->lineFormatter);
-        $this->exceptionLogger->pushHandler($errorRotate);
-
-        //add info
-        $webProcessor = new WebProcessor(null, [
+    public function webProcessor()
+    {
+        return new WebProcessor(null, [
             'url'         => 'REQUEST_URI',
             'http_method' => 'REQUEST_METHOD',
             'server'      => 'SERVER_NAME',
             'referrer'    => 'HTTP_REFERER',
         ]);
-        $this->accessLogger->pushProcessor($webProcessor);
+    }
 
-        //basic info
-        $this->product     = $this->config->get('logcollector.product', 'logcollector');
-        $this->serviceName = $this->config->get('logcollector.service_name', 'server');
-        $this->startTime   = microtime(true);
-        $this->requestId   = (string)Uuid::generate(4);
-        $this->prefix      = $this->product . " " . $this->serviceName;
+    public function setLoggeies()
+    {
+        $logs = $this->config->get('logcollector.logs');
+        foreach ($logs as $logName => $logSetting) {
+            $channel  = $this->config->get("logcollector.${logName}.channel", 'access');
+            $fileName = $this->config->get("logcollector.${logName}.name", storage_path("logs/${logName}.log"));
+            $level    = $this->config->get("logcollector.${logName}.level", 'info');
+
+            switch ($level) {
+                case 'debug':
+                    $rotate = new RotatingFileHandler($fileName, Logger::DEBUG);
+                    break;
+                case 'info':
+                    $rotate = new RotatingFileHandler($fileName, Logger::INFO);
+                    break;
+                case 'warning':
+                    $rotate = new RotatingFileHandler($fileName, Logger::WARNING);
+                    break;
+                case 'error':
+                    $rotate = new RotatingFileHandler($fileName, Logger::ERROR);
+                    break;
+                default:
+                    throw new \Exception('Log Level Must Be: \'debug\', \'info\', \'warning\', \'error\'!');
+            }
+
+            $logger = new Logger($channel);
+            $rotate->setFormatter($this->lineFormatter);
+            $logger->pushHandler($rotate);
+            $this->loggeies[$logName] = $logger;
+        }
+
+        dd($this->loggeies);
     }
 
     public function addLogInfo($key, $value)
     {
         if (!isset($key) || !isset($value)) {
-            return false;
+            throw new \Exception('Key And Value Con\'t Be Null !');
         }
 
         $this->logInfo[$key] = $value;
-        return true;
-    }
 
-    public function makeLogger(string $fileName, string $channel, \Closure $processor)
-    {
-        $logger = new Logger($channel);
-
-        try {
-            $logger->pushHandler(new StreamHandler($fileName, Logger::INFO, false));
-        } catch (\Exception $e) {
-            $logger->info('pushHandlerError', $e->getMessage());
-        }
-
-        $logger->pushProcessor($processor);
-        return $logger;
+        return $this;
     }
 
     public function logAccess()
     {
         $this->accessLogger->pushProcessor(function ($record) {
-            $record['extra']                  = array_merge($this->logInfo, $record['extra']);
-            $record['extra']['request_id']    = $this->requestId;
-            $record['extra']['response_time'] = sprintf('%dms', round(microtime(true) * 1000 - $this->startTime * 1000));
-            $record['extra']['ip']            = $this->getClientIp();
+            $record['extra'] = array_merge($this->logInfo, $record['extra'], [
+                'request_id'    => $this->requestId,
+                'response_time' => sprintf('%dms', round(microtime(true) * 1000 - $this->startTime * 1000)),
+                'ip'            => $this->getClientIp()
+            ]);
+
             return $record;
         });
 

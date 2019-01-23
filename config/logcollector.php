@@ -2,22 +2,27 @@
 
 return [
 
-    'product'      => 'product_name',
-    'service_name' => 'server',
+    'product'      => 'oc',
+    'service_name' => 'chinese_classroom',
+    'formater'     => '[%datetime%] %channel%.%level_name%: %message% %extra%\n',
 
-    'access' => [
-        'log_channel' => 'ACCESS',
-        'file_name'   => storage_path("logs/access.log"),
-    ],
+    'logs' => [
+        'access' => [
+            'channel'   => 'access',
+            'file' => storage_path("logs/access.log"),
+            'level' => ''
+        ],
 
-    'event' => [
-        'log_channel' => 'EVENT',
-        'file_name'   => storage_path("logs/event.log"),
-    ],
+        'event' => [
+            'channel'   => 'event',
+            'file' => storage_path("logs/event.log"),
+            'level' => ''
+        ],
 
-    'exception' => [
-        'log_channel'    => 'EXCEPTION',
-        'file_name'      => storage_path("logs/exception.log"),
-        'dingtalk_token' => 'dingtalk_token',
-    ],
+        'exception' => [
+            'channel'   => 'exception',
+            'file' => storage_path("logs/exception.log"),
+            'level' => ''
+        ]
+    ]
 ];
