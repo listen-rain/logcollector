@@ -16,8 +16,8 @@ class LogCollector
     protected        $prefix;
     protected        $startTime;
     protected        $requestId;
-    protected        $logInfo  = [];
-    protected static $loggeies = [];
+    protected        $logInfo = [];
+    protected static $loggers = [];
 
     public function __construct(Repository $config)
     {
@@ -69,10 +69,10 @@ class LogCollector
 
             $logger = new Logger($channel);
             $logger->pushHandler($rotate);
-            static::$loggeies[$logName] = $logger;
+            static::$loggers[$logName] = $logger;
         }
 
-        dd(static::$loggeies);
+        dd(static::$loggers);
     }
 
     private function setLoggerHandler($fileName, $level)
@@ -102,9 +102,14 @@ class LogCollector
         return $this;
     }
 
+    public function initLogInfo()
+    {
+        $this->logInfo = [];
+    }
+
     public function logAccess()
     {
-        $this->accessLogger->pushProcessor(function ($record) {
+        static::$loggers['access']->pushProcessor(function ($record) {
             $record['extra'] = array_merge($this->logInfo, $record['extra'], [
                 'request_id'    => $this->requestId,
                 'response_time' => sprintf('%dms', round(microtime(true) * 1000 - $this->startTime * 1000)),
@@ -114,7 +119,8 @@ class LogCollector
             return $record;
         });
 
-        $this->accessLogger->addInfo($this->prefix);
+        static::$loggers['access']->addInfo($this->prefix);
+        $this->initLogInfo();
     }
 
     public function logEvent($userId, $eventName, $eventInfo)
@@ -123,42 +129,48 @@ class LogCollector
         $this->eventInfo   = $eventInfo;
         $this->eventUserId = $userId;
 
-        $this->eventLogger->pushProcessor(function ($record) {
-            $record['extra']['request_id']    = $this->requestId;
-            $record['extra']['event_name']    = $this->eventName;
-            $record['extra']['event_info']    = $this->eventInfo;
-            $record['extra']['event_user_id'] = $this->eventUserId;
+        static::$loggers['event']->pushProcessor(function ($record) use ($eventName, $eventInfo, $userId) {
+            $record['extra'] = [
+                'request_id'    => $this->requestId,
+                'event_name'    => $eventName,
+                'event_info'    => $eventInfo,
+                'event_user_id' => $userId
+            ];
+
             return $record;
         });
 
-        $this->eventLogger->addInfo($this->prefix);
+        static::$loggers['event']->addInfo($this->prefix);
+        $this->initLogInfo();
     }
 
-    public function logException($exceptionName, $msg, $dingtalk_token = '')
+    public function logException($exceptionName, $msg, $dingtalkToken = '')
     {
-        $this->exceptionName  = $exceptionName;
-        $this->exceptionMsg   = $msg;
-        $this->exceptionToken = $this->config->get('logcollector.exception.dingtalk_token');
-        $this->exceptionLogger->pushProcessor(function ($record) {
-            $record['extra']['request_id']      = $this->requestId;
-            $record['extra']['exception_name']  = $this->exceptionName;
-            $record['extra']['exception_msg']   = $this->exceptionMsg;
-            $record['extra']['exception_token'] = $this->exceptionToken;
+        $exceptionToken = $this->config->get('logcollector.exception.dingtalk_token', '');
+
+        static::$loggers['exception']->pushProcessor(function ($record) use ($exceptionName, $msg, $exceptionToken) {
+            $record['extra'] = [
+                'request_id'      => $this->requestId,
+                'exception_name'  => $exceptionName,
+                'exception_msg'   => $msg,
+                'exception_token' => $exceptionToken
+            ];
+
             return $record;
         });
 
-        $this->exceptionLogger->addInfo($this->prefix);
+        static::$loggers['exception']->addInfo($this->prefix);
+        $this->initLogInfo();
     }
 
-    public function addUserId($userId)
+    public function logOther($name, $arguments)
     {
-        $this->logInfo['user_id'] = $userId;
-    }
+        static::$loggers[$name]->pushProcessor(function ($record) use ($arguments) {
+            $record['extra'] = $arguments;
+            return $record;
+        });
 
-    public function addResponseCode($responseCode, $responseMsg)
-    {
-        $this->logInfo['response_code'] = $responseCode;
-        $this->logInfo['response_msg']  = $responseMsg;
+        static::$loggers[$name]->addInfo($this->prefix);
     }
 
     public function getRequestId()
@@ -179,6 +191,19 @@ class LogCollector
         } elseif (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], 'unknown')) {
             $uip = $_SERVER['REMOTE_ADDR'];
         }
+
         return $uip;
+    }
+
+    public function __call($name, $arguments)
+    {
+        if (in_array($name, static::$loggers)) {
+            if (in_array($name, ['access', 'event', 'exception'])) {
+                $methodName = 'log' . ucfirst($name);
+                $this->$methodName($arguments);
+            } else {
+                $this->logOther($name, ...$arguments);
+            }
+        }
     }
 }
