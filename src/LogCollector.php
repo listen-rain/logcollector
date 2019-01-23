@@ -205,5 +205,7 @@ class LogCollector
                 $this->logOther($name, ...$arguments);
             }
         }
+
+        throw new \Exception('Method Does Not Exists! ');
     }
 }
