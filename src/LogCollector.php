@@ -16,7 +16,7 @@ class LogCollector
     protected        $prefix;
     protected        $startTime;
     protected        $requestId;
-    protected        $logInfo  = array();
+    protected        $logInfo  = [];
     protected static $loggeies = [];
 
     public function __construct(Repository $config)
@@ -56,7 +56,7 @@ class LogCollector
         ]);
     }
 
-    public function setLoggeies()
+    private function setLoggeies()
     {
         $logs = $this->config->get('logcollector.logs');
         foreach ($logs as $logName => $logSetting) {
@@ -64,30 +64,31 @@ class LogCollector
             $fileName = $this->config->get("logcollector.${logName}.name", storage_path("logs/${logName}.log"));
             $level    = $this->config->get("logcollector.${logName}.level", 'info');
 
-            switch ($level) {
-                case 'debug':
-                    $rotate = new RotatingFileHandler($fileName, Logger::DEBUG);
-                    break;
-                case 'info':
-                    $rotate = new RotatingFileHandler($fileName, Logger::INFO);
-                    break;
-                case 'warning':
-                    $rotate = new RotatingFileHandler($fileName, Logger::WARNING);
-                    break;
-                case 'error':
-                    $rotate = new RotatingFileHandler($fileName, Logger::ERROR);
-                    break;
-                default:
-                    throw new \Exception('Log Level Must Be: \'debug\', \'info\', \'warning\', \'error\'!');
-            }
+            $rotate = $this->setLoggerHandler($fileName, $level);
+            $rotate->setFormatter($this->lineFormatter);
 
             $logger = new Logger($channel);
-            $rotate->setFormatter($this->lineFormatter);
             $logger->pushHandler($rotate);
-            $this->loggeies[$logName] = $logger;
+            static::$loggeies[$logName] = $logger;
         }
 
-        dd($this->loggeies);
+        dd(static::$loggeies);
+    }
+
+    private function setLoggerHandler($fileName, $level)
+    {
+        switch ($level) {
+            case 'debug':
+                return new RotatingFileHandler($fileName, Logger::DEBUG);
+            case 'info':
+                return new RotatingFileHandler($fileName, Logger::INFO);
+            case 'warning':
+                return new RotatingFileHandler($fileName, Logger::WARNING);
+            case 'error':
+                return new RotatingFileHandler($fileName, Logger::ERROR);
+            default:
+                throw new \Exception('Log Level Must Be: \'debug\', \'info\', \'warning\', \'error\'!');
+        }
     }
 
     public function addLogInfo($key, $value)
