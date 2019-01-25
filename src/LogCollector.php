@@ -46,7 +46,7 @@ class LogCollector
      * @var array
      * @desc 日志实例
      */
-    protected static $loggers = [];
+    public static $loggers = [];
 
     /**
      * LogCollector constructor.
@@ -125,6 +125,7 @@ class LogCollector
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param string $channel
      * @param string $logName
      * @param string $fileName
@@ -145,6 +146,7 @@ class LogCollector
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param $logName
      *
      * @return mixed
@@ -222,10 +224,13 @@ class LogCollector
      */
     public function log(string $name, array $arguments)
     {
-        static::$loggers[$name]->pushProcessor(function ($record) use ($arguments) {
+        static::$loggers[$name]->pushProcessor(function ($record) use ($name, $arguments) {
             $record['extra']              = array_merge($this->logInfos, $arguments);
+            $record['extra']['module']    = $name;
             $record['extra']['clientIp']  = static::getClientIp();
             $record['extra']['requestId'] = $this->requestId;
+
+            // dd($record['extra']);
             return $record;
         });
 
@@ -263,8 +268,9 @@ class LogCollector
 
     public function __call($name, $arguments)
     {
-        if (in_array($name, static::$loggers)) {
-            $this->log($name, ...$arguments);
+        if (in_array($name, array_keys(static::$loggers))) {
+            $this->log($name, $arguments);
+            return;
         }
 
         throw new \Exception('Method Does Not Exists! ');
