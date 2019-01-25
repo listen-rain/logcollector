@@ -17,7 +17,7 @@ class LogAfterRequest {
     public function terminate($request, $response) {
         $this->logRequest($request);
         $this->logResponse($response);
-        app('logcollector')->logAfterRequest();
+        app('logcollector')->access();
     }
 
     public function logRequest($request) {
