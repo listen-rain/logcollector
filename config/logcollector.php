@@ -2,11 +2,11 @@
 
 return [
 
-    'product'      => 'oc',
-    'service_name' => 'chinese_classroom',
+    'product'      => env('PRODUCT_NAME', 'logcollector'),
+    'service_name' => env('service_name', 'default'),
     'formater'     => '[%datetime%] %channel%.%level_name%: %message% %extra%\n',
 
-    'logs' => [
+    'loggers' => [
         'access' => [
             'channel'   => 'access',
             'file' => storage_path("logs/access.log"),
