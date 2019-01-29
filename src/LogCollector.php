@@ -126,6 +126,16 @@ class LogCollector
     }
 
     /**
+     * @date   2019/1/29
+     * @author <zhufengwei@aliyun.com>
+     * @return mixed
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
      *
@@ -273,7 +283,7 @@ class LogCollector
      *
      * @return $this
      */
-    public function log(string $name, array $arguments, string $level = 'addInfo')
+    private function log(string $name, array $arguments, string $level = 'addInfo')
     {
         static::$loggers[$name]->pushProcessor(function ($record) use ($name, $arguments) {
             $record['extra'] = array_merge($this->logInfos, $arguments, [
@@ -292,6 +302,21 @@ class LogCollector
     }
 
     /**
+     * @date   2019/1/29
+     * @author <zhufengwei@aliyun.com>
+     * @param string $loggerName
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getLogger(string $loggerName)
+    {
+        if ($this->checkLoggerName($loggerName)) {
+            return static::$loggers[$loggerName];
+        }
+    }
+
+    /**
      * @date   2019/1/24
      * @author <zhufengwei@aliyun.com>
      * @return mixed
@@ -306,7 +331,7 @@ class LogCollector
      * @author <zhufengwei@aliyun.com>
      * @return array|false|string
      */
-    public static function getClientIp()
+    private static function getClientIp()
     {
         $uip = '0.0.0.0';
 
@@ -352,7 +377,7 @@ class LogCollector
      *
      * @return array
      */
-    public function parseAction(string $name): array
+    private function parseAction(string $name): array
     {
         $array = explode('_', Str::snake($name));
 
