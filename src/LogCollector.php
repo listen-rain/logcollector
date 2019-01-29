@@ -2,6 +2,8 @@
 
 namespace Listen\LogCollector;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
@@ -47,7 +49,7 @@ class LogCollector
      * @var array
      * @desc 日志实例
      */
-    protected $loggers = [];
+    protected static $loggers = [];
 
     /**
      * LogCollector constructor.
@@ -79,6 +81,7 @@ class LogCollector
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param string $name
      *
      * @return bool
@@ -86,7 +89,7 @@ class LogCollector
      */
     public function checkLoggerName(string $name)
     {
-        if (!in_array(strtolower($name), array_keys($this->loggers))) {
+        if (!in_array(Str::lower($name), array_keys(static::$loggers))) {
             throw new \Exception('logger name is illegal !');
         }
 
@@ -125,19 +128,14 @@ class LogCollector
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param string $name
      *
      * @throws \Exception
      */
-    private function setLoggeies(string $name = '')
+    private function setLoggeies()
     {
-        if (!$name) {
-            $loggers = $this->config->get('logcollector.loggers');
-        } else {
-            // 重置 logger 实例
-            $loggers = [$name => $this->config->get("logcollector.loggers.${name}")];
-            $this->checkLoggerName($name);
-        }
+        $loggers = $this->config->get('logcollector.loggers');
 
         // 实例化配置文件中的所有 logger 实例
         foreach ($loggers as $logName => $logSetting) {
@@ -153,17 +151,20 @@ class LogCollector
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param string $channel
      * @param string $logName
      * @param string $fileName
      * @param string $level
-     * @param string $mode  daily | single
+     * @param string $mode daily | single
      *
      * @throws \Exception
      */
-    public function addLogger(string $channel, string $logName, string $fileName, string $level = 'info', string $mode = 'daily')
+    public function addLogger(string $channel, string $logName = '', string $fileName = '', string $level = 'info', string $mode = 'daily')
     {
-        $logger = new Logger($channel);
+        $logName  = $logName ?: $channel;
+        $fileName = $fileName ?: $this->getFileName($logName);
+        $logger   = new Logger($channel);
 
         if ($mode === 'daily') {
             // 日志切割成每日一个日志文件
@@ -182,12 +183,15 @@ class LogCollector
             throw new \Exception('Mode is illegal !');
         }
 
-        $this->loggers[strtolower($logName)] = $logger;
+        static::$loggers[strtolower($logName)] = $logger;
+
+        return $this;
     }
 
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param string $logName
      *
      * @return mixed
@@ -230,7 +234,7 @@ class LogCollector
      * @author <zhufengwei@aliyun.com>
      *
      * @param string $key
-     * @param $value
+     * @param        $value
      *
      * @return $this
      * @throws \Exception
@@ -260,18 +264,18 @@ class LogCollector
     }
 
     /**
-     * @date   2019/1/24
+     * @date   2019/1/29
      * @author <zhufengwei@aliyun.com>
      *
      * @param string $name
      * @param array  $arguments
+     * @param string $level
+     *
      * @return $this
      */
-    public function log(string $name, array $arguments)
+    public function log(string $name, array $arguments, string $level = 'addInfo')
     {
-        $this->loggers[$name]->pushProcessor(function ($record) use ($name, $arguments) {
-            $arguments = !empty($arguments) ? current($arguments) : $arguments;
-
+        static::$loggers[$name]->pushProcessor(function ($record) use ($name, $arguments) {
             $record['extra'] = array_merge($this->logInfos, $arguments, [
                 'clientIp'  => static::getClientIp(),
                 'requestId' => $this->requestId
@@ -280,11 +284,9 @@ class LogCollector
             return $record;
         });
 
-        // 记录日志
-        $this->loggers[$name]->addInfo($this->prefix);
-
-        // 重置 logger 实例
-        $this->initLogInfo()->setLoggeies($name);
+        static::$loggers[$name]->$level($this->prefix);
+        static::$loggers[$name]->popProcessor();
+        $this->initLogInfo();
 
         return $this;
     }
@@ -325,6 +327,7 @@ class LogCollector
     /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
+     *
      * @param $name
      * @param $arguments
      *
@@ -333,11 +336,33 @@ class LogCollector
      */
     public function __call($name, $arguments)
     {
-        $name = strtolower($name);
+        list($name, $level) = $this->parseAction($name);
         if ($this->checkLoggerName($name)) {
-            return $this->log($name, $arguments);
+            return $this->log($name, $arguments, $level);
         }
 
         throw new \Exception('Method Does Not Exists! ');
+    }
+
+    /**
+     * @date   2019/1/29
+     * @author <zhufengwei@aliyun.com>
+     *
+     * @param string $name
+     *
+     * @return array
+     */
+    public function parseAction(string $name): array
+    {
+        $array = explode('_', Str::snake($name));
+
+        $name  = Str::lower(array_first($array));
+        $level = 'Info';
+
+        if (count($array) >= 2) {
+            $level = 'add' . Str::ucfirst(array_last($array));
+        }
+
+        return [$name, $level];
     }
 }
