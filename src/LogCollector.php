@@ -43,19 +43,24 @@ class LogCollector
      * LogCollector constructor.
      * @throws \Exception
      */
-    public function __construct($registerConfigLogggers = false, $product = '', $serviceName = '')
+    public function __construct($registerConfigLogggers = false)
     {
-        $product         = $product ?: config('logcollector.product', 'logcollector');
-        $serviceName     = $serviceName ?: config('logcollector.service_name', 'server');
-
-        $this->prefix    = $product . "." . $serviceName;
-        $this->startTime = microtime(true);
-        $this->requestId = (string)Uuid::generate(4);
+        $this->setBaseInfo(
+            config('logcollector.product', 'logcollector'),
+            config('logcollector.service_name', 'default')
+        );
 
         if ($registerConfigLogggers && empty(static::$loggerNames)) {
             // 注册配置文件中的日志
             $this->registerConfigLogggers();
         }
+    }
+
+    public function setBaseInfo($product, $serviceName)
+    {
+        $this->prefix    = $product . "." . $serviceName;
+        $this->startTime = microtime(true);
+        $this->requestId = (string)Uuid::generate(4);
     }
 
     public function registerConfigLogggers()
