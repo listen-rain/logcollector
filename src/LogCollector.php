@@ -43,10 +43,11 @@ class LogCollector
      * LogCollector constructor.
      * @throws \Exception
      */
-    public function __construct($registerConfigLogggers = false)
+    public function __construct($registerConfigLogggers = false, $product = '', $serviceName = '')
     {
-        $product         = config('logcollector.product', 'logcollector');
-        $serviceName     = config('logcollector.service_name', 'server');
+        $product         = $product ?: config('logcollector.product', 'logcollector');
+        $serviceName     = $serviceName ?: config('logcollector.service_name', 'server');
+
         $this->prefix    = $product . "." . $serviceName;
         $this->startTime = microtime(true);
         $this->requestId = (string)Uuid::generate(4);
