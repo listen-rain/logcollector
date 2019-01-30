@@ -3,7 +3,6 @@
 namespace Listen\LogCollector;
 
 use Illuminate\Support\Str;
-use Monolog\Handler\RotatingFileHandler;
 use Webpatser\Uuid\Uuid;
 
 class LogCollector
@@ -36,6 +35,11 @@ class LogCollector
     protected static $loggers = [];
 
     /**
+     * @var array
+     */
+    protected static $loggerNames = [];
+
+    /**
      * LogCollector constructor.
      * @throws \Exception
      */
@@ -46,6 +50,10 @@ class LogCollector
         $this->prefix    = $product . "." . $serviceName;
         $this->startTime = microtime(true);
         $this->requestId = (string)Uuid::generate(4);
+
+        if (empty(static::$loggerNames)) {
+            static::$loggerNames = array_keys(config('logcollector.loggers'));
+        }
     }
 
     /**
@@ -57,9 +65,40 @@ class LogCollector
      * @return bool
      * @throws \Exception
      */
-    public function checkLoggerName(string $name)
+    public function checkLogger(string $name)
     {
         if (!in_array(Str::lower($name), array_keys(static::$loggers))) {
+            throw new \Exception('logger is illegal !');
+        }
+
+        return true;
+    }
+
+    /**
+     * @date   2019/1/30
+     * @author <zhufengwei@aliyun.com>
+     * @param $name
+     */
+    public function registerLoggerName(string $name)
+    {
+        if (!in_array($name, static::$loggerNames)) {
+            array_push(static::$loggerNames, $name);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @date   2019/1/30
+     * @author <zhufengwei@aliyun.com>
+     * @param $name
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    public function checkLoggerName($name)
+    {
+        if (!in_array(Str::lower($name), static::$loggerNames)) {
             throw new \Exception('logger name is illegal !');
         }
 
@@ -89,7 +128,7 @@ class LogCollector
     {
         static::$loggers[Str::lower($name)] = $logger;
 
-        return $this;
+        return $this->registerLoggerName($name);
     }
 
     /**
@@ -118,9 +157,7 @@ class LogCollector
                ->setMode($mode)
                ->make();
 
-        $this->addLogger($name, $logger);
-
-        return $this;
+        return $this->addLogger($name, $logger);
     }
 
     /**
@@ -210,7 +247,7 @@ class LogCollector
      */
     public function getLogger(string $loggerName)
     {
-        if ($this->checkLoggerName($loggerName)) {
+        if ($this->checkLogger($loggerName)) {
             return static::$loggers[$loggerName];
         }
     }
