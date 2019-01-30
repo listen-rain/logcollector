@@ -1,8 +1,8 @@
 {
     "name": "listen/logcollector",
     "type": "library",
-    "version": "3.1.1",
-    "description": "通过日志统一收集事件，同时记录每一个请求",
+    "version": "4.0.1",
+    "description": "用于 Laravel5 的基于monolog 的日志服务",
     "keywords": ["日志收集", "事件", "记录请求"],
     "homepage": "https://github.com/listen-rain/logcollector",
     "license": "MIT",
@@ -15,8 +15,8 @@
     "require": {
         "php": "~7.1",
         "monolog/monolog": "*",
-        "illuminate/config": "~5.0",
-        "illuminate/support": "~5.0",
+        "illuminate/config": "5.*",
+        "illuminate/support": "5.*",
         "webpatser/laravel-uuid": "2.*"
     },
     "autoload": {
