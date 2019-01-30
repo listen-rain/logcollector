@@ -58,12 +58,23 @@ php artisan vendor:publish
 
 2、动态添加 Logger
 ```
-$logCollector = LogCollector::addLogger('event');
+$loggerName = 'event';
+// 主动注册日志名，调用时会自动加载
+$logCollector = LogCollector::registerLoggerName($loggerName);
+
+// 注册并加载
+$logCollector = LogCollector::load($loggerName);
+
+// 注册指定属性的日志
+$logger = new Listen\LogCollector\Logger($loggerName);
+$logger = $logger->setFile('path/to/file');
+$logger = $logger->setMode('默认值是 single'); // 如果不调用此方法，默认的记录模式是 'daily'
+$logCollector = LogCollector::addLogger($loggerName, 'debug');
 ```
 
 3、记录日志
 ```
-$logCollector->event('事件日志文本');
+$logCollector->event('事件日志文本'); // 等同于 $logCollector->eventInfo('...');
 $logCollector->eventError('事件日志错误');
 ```
 
