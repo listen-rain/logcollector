@@ -2,28 +2,12 @@
 
 namespace Listen\LogCollector;
 
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
-use Monolog\Formatter\LineFormatter;
-use Monolog\Processor\WebProcessor;
-use Illuminate\Config\Repository;
 use Webpatser\Uuid\Uuid;
 
 class LogCollector
 {
-    /**
-     * @var \Illuminate\Config\Repository
-     */
-    protected $config;
-
-    /**
-     * @var \Monolog\Formatter\LineFormatter
-     */
-    protected $lineFormatter;
-
     /**
      * @desc 日志文本前缀
      */
@@ -53,26 +37,12 @@ class LogCollector
 
     /**
      * LogCollector constructor.
-     *
-     * @param \Illuminate\Config\Repository $config
-     */
-    public function __construct(Repository $config)
-    {
-        $this->config = $config;
-        $this->setBaseInfo();
-        $this->setLineFormater();
-        $this->setLoggeies();
-    }
-
-    /**
-     * @date   2019/1/24
-     * @author <zhufengwei@aliyun.com>
      * @throws \Exception
      */
-    private function setBaseInfo()
+    public function __construct()
     {
-        $product         = $this->config->get('logcollector.product', 'logcollector');
-        $serviceName     = $this->config->get('logcollector.service_name', 'server');
+        $product         = config('logcollector.product', 'logcollector');
+        $serviceName     = config('logcollector.service_name', 'server');
         $this->prefix    = $product . "." . $serviceName;
         $this->startTime = microtime(true);
         $this->requestId = (string)Uuid::generate(4);
@@ -97,35 +67,6 @@ class LogCollector
     }
 
     /**
-     * @date   2019/1/24
-     * @author <zhufengwei@aliyun.com>
-     */
-    public function setLineFormater()
-    {
-        $formater = $this->config->get(
-            'logcollector.formater',
-            "[%datetime%] %channel%.%level_name%: %message% %extra%\n"
-        );
-
-        $this->lineFormatter = new LineFormatter($formater);
-    }
-
-    /**
-     * @date   2019/1/24
-     * @author <zhufengwei@aliyun.com>
-     * @return \Monolog\Processor\WebProcessor
-     */
-    public function webProcessor()
-    {
-        return new WebProcessor(null, [
-            'url'         => 'REQUEST_URI',
-            'http_method' => 'REQUEST_METHOD',
-            'server'      => 'SERVER_NAME',
-            'referrer'    => 'HTTP_REFERER',
-        ]);
-    }
-
-    /**
      * @date   2019/1/29
      * @author <zhufengwei@aliyun.com>
      * @return mixed
@@ -136,64 +77,48 @@ class LogCollector
     }
 
     /**
-     * @date   2019/1/25
+     * @date   2019/1/30
+     * @author <zhufengwei@aliyun.com>
+     *
+     * @param                             $name
+     * @param \Listen\LogCollector\Logger $logger
+     *
+     * @return $this
+     */
+    public function addLogger($name, Logger $logger)
+    {
+        static::$loggers[Str::lower($name)] = $logger;
+
+        return $this;
+    }
+
+    /**
+     * @date   2019/1/30
      * @author <zhufengwei@aliyun.com>
      *
      * @param string $name
      *
-     * @throws \Exception
+     * @return $this
+     * @throws \Listen\LogCollector\Exceptions\LoggerException
      */
-    private function setLoggeies()
+    public function load(string $name = '')
     {
-        $loggers = $this->config->get('logcollector.loggers');
-
-        // 实例化配置文件中的所有 logger 实例
-        foreach ($loggers as $logName => $logSetting) {
-            $channel  = $this->config->get("logcollector.loggers.${logName}.channel", 'access');
-            $level    = $this->config->get("logcollector.loggers.${logName}.level", 'info');
-            $mode     = $this->config->get("logcollector.loggers.${logName}.mode", 'daily');
-            $fileName = $this->getFileName($logName);
-
-            $this->addLogger($channel, $logName, $fileName, $level, $mode);
-        }
-    }
-
-    /**
-     * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
-     *
-     * @param string $channel
-     * @param string $logName
-     * @param string $fileName
-     * @param string $level
-     * @param string $mode daily | single
-     *
-     * @throws \Exception
-     */
-    public function addLogger(string $channel, string $logName = '', string $fileName = '', string $level = 'info', string $mode = 'daily')
-    {
-        $logName  = $logName ?: $channel;
-        $fileName = $fileName ?: $this->getFileName($logName);
-        $logger   = new Logger($channel);
-
-        if ($mode === 'daily') {
-            // 日志切割成每日一个日志文件
-            $rotate = new RotatingFileHandler($fileName, $this->config->get('logcollector.max_file'), $this->setLoggerLevel($level), false);
-            $rotate->setFormatter($this->lineFormatter);
-            $logger->pushHandler($rotate);
-
-        } else if ($mode === 'single') {
-            // 所有日志都记录到一个文件，此时的 handler 级别仅支持 info
-            if ($level !== 'info') {
-                throw new \Exception('single mode support info level only!');
-            }
-
-            $logger->pushHandler(new StreamHandler($fileName, Logger::INFO, false));
-        } else {
-            throw new \Exception('Mode is illegal !');
+        if (isset(static::$loggers[Str::lower($name)]) && static::$loggers[Str::lower($name)] instanceof Logger) {
+            return $this;
         }
 
-        static::$loggers[strtolower($logName)] = $logger;
+        $channel = config("logcollector.loggers.{$name}.channel", $name);
+        $level   = config("logcollector.loggers.{$name}.level", 'info');
+        $mode    = config("logcollector.loggers.{$name}.mode", 'daily');
+        $file    = $this->getFile($name);
+
+        $logger = new Logger($name, $level);
+        $logger->setFile($file)
+               ->setChannel($channel)
+               ->setMode($mode)
+               ->make();
+
+        $this->addLogger($name, $logger);
 
         return $this;
     }
@@ -206,37 +131,9 @@ class LogCollector
      *
      * @return mixed
      */
-    public function getFileName(string $logName)
+    public function getFile(string $logName)
     {
-        return $this->config->get(
-            "logcollector.loggers.${logName}.file",
-            storage_path("logs/${logName}.log")
-        );
-    }
-
-    /**
-     * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
-     *
-     * @param string $level
-     *
-     * @return int
-     * @throws \Exception
-     */
-    private function setLoggerLevel(string $level)
-    {
-        switch (strtolower($level)) {
-            case 'debug':
-                return Logger::DEBUG;
-            case 'info':
-                return Logger::INFO;
-            case 'warning':
-                return Logger::WARNING;
-            case 'error':
-                return Logger::ERROR;
-            default:
-                throw new \Exception('Log Level Must Be: \'debug\', \'info\', \'warning\', \'error\'!');
-        }
+        return config("logcollector.loggers.${logName}.file", storage_path("logs/${logName}.log"));
     }
 
     /**
@@ -285,7 +182,8 @@ class LogCollector
      */
     private function log(string $name, array $arguments, string $level = 'addInfo')
     {
-        static::$loggers[$name]->pushProcessor(function ($record) use ($name, $arguments) {
+        $logger = $this->load($name)->getLogger($name);
+        $logger->pushProcessor(function ($record) use ($name, $arguments) {
             $record['extra'] = array_merge($this->logInfos, $arguments, [
                 'clientIp'  => static::getClientIp(),
                 'requestId' => $this->requestId
@@ -294,8 +192,8 @@ class LogCollector
             return $record;
         });
 
-        static::$loggers[$name]->$level($this->prefix);
-        static::$loggers[$name]->popProcessor();
+        $logger->$level($this->prefix);
+        $logger->popProcessor();
         $this->initLogInfo();
 
         return $this;
@@ -304,6 +202,7 @@ class LogCollector
     /**
      * @date   2019/1/29
      * @author <zhufengwei@aliyun.com>
+     *
      * @param string $loggerName
      *
      * @return mixed

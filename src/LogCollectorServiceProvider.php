@@ -25,9 +25,7 @@ class LogCollectorServiceProvider extends ServiceProvider
         // Bind captcha
         $this->app->singleton('logcollector', function($app)
         {
-            return new LogCollector(
-                $app['Illuminate\Config\Repository']
-            );
+            return new LogCollector();
         });
     }
 }
