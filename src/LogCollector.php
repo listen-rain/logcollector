@@ -40,7 +40,7 @@ class LogCollector
             config('logcollector.service_name', 'default')
         );
 
-        if ($registerConfigLogggers && empty(static::$loggerNames)) {
+        if ($registerConfigLogggers) {
             // 注册配置文件中的日志
             $this->registerConfigLogggers();
         }
@@ -62,9 +62,19 @@ class LogCollector
         return $this;
     }
 
+    /**
+     * @date   2019/1/30
+     * @author <zhufengwei@aliyun.com>
+     * @return $this
+     */
     public function registerConfigLogggers()
     {
-        static::$loggerNames = array_keys(config('logcollector.loggers'));
+        $configLoggers = array_keys(config('logcollector.loggers'));
+        foreach ($configLoggers as $configLogger) {
+            if (!in_array($configLogger, static::$loggerNames)) {
+                array_push(static::$loggerNames, $configLogger);
+            }
+        }
 
         return $this;
     }
@@ -114,6 +124,7 @@ class LogCollector
     public function checkLoggerName($name)
     {
         if (!in_array(Str::lower($name), static::$loggerNames)) {
+            \Log::error('logcollector', [$name]);
             throw new \Exception('logger name is illegal !');
         }
 
