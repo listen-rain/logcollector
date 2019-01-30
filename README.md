@@ -67,7 +67,7 @@ $logCollector->event('事件日志文本');
 $logCollector->eventError('事件日志错误');
 ```
 
-4、获取 Loogger 并记录日志
+4、获取 Loogger 并记录自定义日志
 ```
 $logger = $logCollector->getLogger($loggerName);
 $logger->pushProcessor(function ($record) {
