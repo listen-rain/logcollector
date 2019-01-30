@@ -56,11 +56,21 @@ class LogCollector
         }
     }
 
+    /**
+     * @date   2019/1/30
+     * @author <zhufengwei@aliyun.com>
+     * @param $product
+     * @param $serviceName
+     *
+     * @throws \Exception
+     */
     public function setBaseInfo($product, $serviceName)
     {
         $this->prefix    = $product . "." . $serviceName;
         $this->startTime = microtime(true);
         $this->requestId = (string)Uuid::generate(4);
+
+        return $this;
     }
 
     public function registerConfigLogggers()
