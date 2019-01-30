@@ -11,21 +11,20 @@ class LogCollectorServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__.'/../config/logcollector.php' => config_path('logcollector.php')
-        ], 'config');
+                             __DIR__ . '/../config/logcollector.php' => config_path('logcollector.php')
+                         ], 'config');
     }
 
     public function register()
     {
         // Merge configs
         $this->mergeConfigFrom(
-            __DIR__.'/../config/logcollector.php', 'logcollector'
+            __DIR__ . '/../config/logcollector.php', 'logcollector'
         );
 
         // Bind captcha
-        $this->app->singleton('logcollector', function($app)
-        {
-            return new LogCollector();
+        $this->app->singleton('logcollector', function ($app) {
+            return new LogCollector(true);
         });
     }
 }

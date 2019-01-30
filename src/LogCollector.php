@@ -43,7 +43,7 @@ class LogCollector
      * LogCollector constructor.
      * @throws \Exception
      */
-    public function __construct()
+    public function __construct($registerConfigLogggers = false)
     {
         $product         = config('logcollector.product', 'logcollector');
         $serviceName     = config('logcollector.service_name', 'server');
@@ -51,9 +51,17 @@ class LogCollector
         $this->startTime = microtime(true);
         $this->requestId = (string)Uuid::generate(4);
 
-        if (empty(static::$loggerNames)) {
-            static::$loggerNames = array_keys(config('logcollector.loggers'));
+        if ($registerConfigLogggers && empty(static::$loggerNames)) {
+            // 注册配置文件中的日志
+            $this->registerConfigLogggers();
         }
+    }
+
+    public function registerConfigLogggers()
+    {
+        static::$loggerNames = array_keys(config('logcollector.loggers'));
+
+        return $this;
     }
 
     /**
@@ -77,6 +85,7 @@ class LogCollector
     /**
      * @date   2019/1/30
      * @author <zhufengwei@aliyun.com>
+     *
      * @param $name
      */
     public function registerLoggerName(string $name)
@@ -91,6 +100,7 @@ class LogCollector
     /**
      * @date   2019/1/30
      * @author <zhufengwei@aliyun.com>
+     *
      * @param $name
      *
      * @return bool
