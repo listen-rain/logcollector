@@ -13,16 +13,6 @@ class LogCollector
     protected $prefix;
 
     /**
-     * @desc 记录开始时间
-     */
-    protected $startTime;
-
-    /**
-     * @desc 请求标识
-     */
-    protected $requestId;
-
-    /**
      * @var array
      * @desc 日志内容
      */
@@ -59,6 +49,7 @@ class LogCollector
     /**
      * @date   2019/1/30
      * @author <zhufengwei@aliyun.com>
+     *
      * @param $product
      * @param $serviceName
      *
@@ -66,9 +57,7 @@ class LogCollector
      */
     public function setBaseInfo($product, $serviceName)
     {
-        $this->prefix    = $product . "." . $serviceName;
-        $this->startTime = microtime(true);
-        $this->requestId = (string)Uuid::generate(4);
+        $this->prefix = $product . "." . $serviceName;
 
         return $this;
     }
@@ -249,7 +238,8 @@ class LogCollector
         $logger->pushProcessor(function ($record) use ($name, $arguments) {
             $record['extra'] = array_merge($this->logInfos, $arguments, [
                 'clientIp'  => static::getClientIp(),
-                'requestId' => $this->requestId
+                'requestId' => (string)Uuid::generate(4),
+                'startTime' => microtime(true)
             ]);
 
             return $record;
