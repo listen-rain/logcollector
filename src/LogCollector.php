@@ -269,16 +269,6 @@ class LogCollector
     }
 
     /**
-     * @date   2019/1/24
-     * @author <zhufengwei@aliyun.com>
-     * @return mixed
-     */
-    public function getRequestId()
-    {
-        return $this->requestId;
-    }
-
-    /**
      * @date   2019/1/25
      * @author <zhufengwei@aliyun.com>
      * @return array|false|string

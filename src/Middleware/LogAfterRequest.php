@@ -4,31 +4,31 @@ namespace Listen\LogCollector\Middleware;
 
 use Closure;
 
-class LogAfterRequest {
+class LogAfterRequest
+{
 
-    public function handle($request, Closure $next) {
-        $requestId = app('logcollector')->getRequestId();
-
-        $response = $next($request);
-        $response->headers->set('X-Request-Id', $requestId, false);
-        return $response;
+    public function handle($request, Closure $next)
+    {
+        return $next($request);
     }
 
-    public function terminate($request, $response) {
+    public function terminate($request, $response)
+    {
         $this->logRequest($request);
         $this->logResponse($response);
         app('logcollector')->access();
     }
 
-    public function logRequest($request) {
+    public function logRequest($request)
+    {
         //添加过滤信息
         $inputSafe = [
             'password'
         ];
-        $inputs = $request->input();
+        $inputs    = $request->input();
         if (!empty($inputs)) {
-            foreach($inputSafe as $safe) {
-                if(!empty($inputs[$safe])) {
+            foreach ($inputSafe as $safe) {
+                if (!empty($inputs[$safe])) {
                     $inputs[$safe] = '[*** SENSOR ***]';
                 }
             }
@@ -37,7 +37,8 @@ class LogAfterRequest {
         app('logcollector')->addLogInfo('request', $inputs);
     }
 
-    public function logResponse($response) {
+    public function logResponse($response)
+    {
         $status = 0;
         if (method_exists($response, 'status')) {
             $status = $response->status();
@@ -45,7 +46,7 @@ class LogAfterRequest {
             $status = $response->getStatusCode();
         }
         $returns = [
-            'status'  => $status,
+            'status' => $status,
         ];
 
         //只打印json格式的返回
