@@ -22,7 +22,10 @@
     "autoload": {
         "psr-4": {
             "Listen\\LogCollector\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "minimum-stability": "stable"
 }
