@@ -69,7 +69,9 @@ $logCollector = LogCollector::load($loggerName);
 $logger = new Listen\LogCollector\Logger($loggerName);
 $logger = $logger->setFile('path/to/file');
 $logger = $logger->setMode('默认值是 single'); // 如果不调用此方法，默认的记录模式是 'daily'
-$logCollector = LogCollector::addLogger($loggerName, 'debug');
+$logger->make();
+
+$logCollector = LogCollector::addLogger($loggerName, $logger);
 ```
 
 3、记录日志
