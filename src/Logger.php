@@ -243,6 +243,10 @@ class Logger
      */
     public function __call($name, $arguments)
     {
+        if (!$this->mlogger) {
+            $this->make();
+        }
+
         return $this->mlogger->$name(...$arguments);
     }
 }
