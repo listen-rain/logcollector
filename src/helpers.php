@@ -7,6 +7,7 @@
  */
 
 use Listen\LogCollector\Logger;
+use Listen\LogCollector\LogCollector;
 
 if (!function_exists('makeLogger')) {
     /**
@@ -20,6 +21,6 @@ if (!function_exists('makeLogger')) {
         $logger = new Logger($name);
         !$isDaily && $logger->setMode();
 
-        return $logger->make();
+        return (new LogCollector())->addLogger($name, $logger->make());
     }
 }

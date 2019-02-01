@@ -223,6 +223,18 @@ class Logger
     }
 
     /**
+     * @date   2019/2/1
+     * @author <zhufengwei@aliyun.com>
+     * @return $this
+     */
+    public function resetMlogger()
+    {
+        $this->mlogger = null;
+
+        return $this;
+    }
+
+    /**
      * @date   2019/1/30
      * @author <zhufengwei@aliyun.com>
      * @return \Monolog\Logger
@@ -243,6 +255,10 @@ class Logger
      */
     public function __call($name, $arguments)
     {
+        if (!$this->mlogger) {
+            $this->make();
+        }
+
         return $this->mlogger->$name(...$arguments);
     }
 }

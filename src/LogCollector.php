@@ -246,6 +246,7 @@ class LogCollector
     private function log(string $name, array $arguments, string $level = 'addInfo')
     {
         $logger = $this->load($name)->getLogger($name);
+
         $logger->pushProcessor(function ($record) use ($name, $arguments) {
             $record['extra'] = array_merge($this->logInfos, $arguments, [
                 'clientIp'  => static::getClientIp(),
