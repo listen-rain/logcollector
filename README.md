@@ -2,6 +2,14 @@
 
 > 基于 Laravel5 的日志记录服务
 
+[![Latest Stable Version](https://poser.pugx.org/listen/logcollector/v/stable)](https://packagist.org/packages/listen/logcollector)
+[![Total Downloads](https://poser.pugx.org/listen/logcollector/downloads)](https://packagist.org/packages/listen/logcollector)
+[![Latest Unstable Version](https://poser.pugx.org/listen/logcollector/v/unstable)](https://packagist.org/packages/listen/logcollector)
+[![License](https://poser.pugx.org/listen/logcollector/license)](https://packagist.org/packages/listen/logcollector)
+[![Monthly Downloads](https://poser.pugx.org/listen/logcollector/d/monthly)](https://packagist.org/packages/listen/logcollector)
+[![Daily Downloads](https://poser.pugx.org/listen/logcollector/d/daily)](https://packagist.org/packages/listen/logcollector)
+[![composer.lock](https://poser.pugx.org/listen/logcollector/composerlock)](https://packagist.org/packages/listen/logcollector)
+
 ## 安装配置
 
 ```
