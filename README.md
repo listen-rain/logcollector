@@ -32,7 +32,7 @@ composer require listen/logcollector
 
 生成配置文件 config/logcollector.php
 ```
-php artisan vendor:publish
+php artisan vendor:publish --provider='Listen\LogCollector\LogCollectorServiceProvider'
 ```
 
 ## 示例
