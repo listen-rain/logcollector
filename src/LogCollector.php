@@ -48,12 +48,12 @@ class LogCollector
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param $product
      * @param $serviceName
      *
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setBaseInfo($product, $serviceName)
     {
@@ -64,8 +64,8 @@ class LogCollector
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
      * @return $this
+     * @author <zhufengwei@aliyun.com>
      */
     public function registerConfigLogggers()
     {
@@ -81,12 +81,12 @@ class LogCollector
 
     /**
      * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $name
      *
      * @return bool
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function checkLogger(string $name)
     {
@@ -99,9 +99,9 @@ class LogCollector
 
     /**
      * @date   2019/1/30
+     * @param $name
      * @author <zhufengwei@aliyun.com>
      *
-     * @param $name
      */
     public function registerLoggerName(string $name)
     {
@@ -114,12 +114,12 @@ class LogCollector
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param $name
      *
      * @return bool
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function checkLoggerName($name)
     {
@@ -133,8 +133,8 @@ class LogCollector
 
     /**
      * @date   2019/1/29
-     * @author <zhufengwei@aliyun.com>
      * @return mixed
+     * @author <zhufengwei@aliyun.com>
      */
     public function getPrefix()
     {
@@ -143,12 +143,12 @@ class LogCollector
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param                             $name
      * @param \Listen\LogCollector\Logger $logger
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function addLogger($name, Logger $logger)
     {
@@ -159,12 +159,12 @@ class LogCollector
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $name
      *
      * @return $this
      * @throws \Listen\LogCollector\Exceptions\LoggerException
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function load(string $name = '')
     {
@@ -188,11 +188,11 @@ class LogCollector
 
     /**
      * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $logName
      *
      * @return mixed
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function getFile(string $logName)
     {
@@ -201,13 +201,13 @@ class LogCollector
 
     /**
      * @date   2019/1/24
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $key
      * @param        $value
      *
      * @return $this
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function addLogInfo(string $key, $value)
     {
@@ -222,9 +222,9 @@ class LogCollector
 
     /**
      * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
      * @return $this
      * @desc   初始化日志信息
+     * @author <zhufengwei@aliyun.com>
      */
     public function initLogInfo()
     {
@@ -234,25 +234,29 @@ class LogCollector
     }
 
     /**
-     * @date   2019/1/29
-     * @author <zhufengwei@aliyun.com>
-     *
+     * @date   2019-05-07
      * @param string $name
      * @param array  $arguments
      * @param string $level
-     *
      * @return $this
+     * @throws Exceptions\LoggerException
+     * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
      */
     private function log(string $name, array $arguments, string $level = 'addInfo')
     {
         $logger = $this->load($name)->getLogger($name);
 
-        $logger->pushProcessor(function ($record) use ($name, $arguments) {
-            $record['extra'] = array_merge($this->logInfos, $arguments, [
-                'clientIp'  => static::getClientIp(),
-                'requestId' => (string)Uuid::generate(4),
-                'startTime' => microtime(true)
-            ]);
+        $logger->pushProcessor(function ($record) use ($arguments) {
+            $record['extra'] = array_merge(
+                $this->logInfos,
+                $this->formatArguments($arguments),
+                [
+                    'clientIp'  => static::getClientIp(),
+                    'requestId' => (string)Uuid::generate(4),
+                    'startTime' => microtime(true)
+                ]
+            );
 
             return $record;
         });
@@ -266,12 +270,12 @@ class LogCollector
 
     /**
      * @date   2019/1/29
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $loggerName
      *
      * @return mixed
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function getLogger(string $loggerName)
     {
@@ -282,8 +286,8 @@ class LogCollector
 
     /**
      * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
      * @return array|false|string
+     * @author <zhufengwei@aliyun.com>
      */
     private static function getClientIp()
     {
@@ -291,12 +295,12 @@ class LogCollector
 
         if (getenv('HTTP_CLIENT_IP') && strcasecmp(getenv('HTTP_CLIENT_IP'), 'unknown')) {
             $uip = getenv('HTTP_CLIENT_IP');
-        } elseif (getenv('HTTP_X_FORWARDED_FOR') && strcasecmp(getenv('HTTP_X_FORWARDED_FOR'), 'unknown')) {
+        } else if (getenv('HTTP_X_FORWARDED_FOR') && strcasecmp(getenv('HTTP_X_FORWARDED_FOR'), 'unknown')) {
             $uip = getenv('HTTP_X_FORWARDED_FOR');
             strpos(',', $uip) && list($uip) = explode(',', $uip);
-        } elseif (getenv('REMOTE_ADDR') && strcasecmp(getenv('REMOTE_ADDR'), 'unknown')) {
+        } else if (getenv('REMOTE_ADDR') && strcasecmp(getenv('REMOTE_ADDR'), 'unknown')) {
             $uip = getenv('REMOTE_ADDR');
-        } elseif (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], 'unknown')) {
+        } else if (isset($_SERVER['REMOTE_ADDR']) && $_SERVER['REMOTE_ADDR'] && strcasecmp($_SERVER['REMOTE_ADDR'], 'unknown')) {
             $uip = $_SERVER['REMOTE_ADDR'];
         }
 
@@ -305,13 +309,13 @@ class LogCollector
 
     /**
      * @date   2019/1/25
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param $name
      * @param $arguments
      *
      * @return \Listen\LogCollector\LogCollector
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function __call($name, $arguments)
     {
@@ -325,11 +329,11 @@ class LogCollector
 
     /**
      * @date   2019/1/29
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $name
      *
      * @return array
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     private function parseAction(string $name): array
     {
@@ -343,5 +347,29 @@ class LogCollector
         }
 
         return [$name, $level];
+    }
+
+    /**
+     * @date   2019-05-07
+     * @param array $arguments
+     * @return array|mixed|string
+     * @author <zhufengwei@aliyun.com>
+     */
+    public function formatArguments(array $arguments)
+    {
+        try {
+            $content = current($arguments);
+            if (is_string($content)) {
+                $arguments = ['message' => $content];
+            }
+
+            if (is_array($content)) {
+                $arguments = (array)$content;
+            }
+        } catch (\Exception $e) {
+
+        }
+
+        return $arguments;
     }
 }

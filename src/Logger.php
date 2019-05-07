@@ -8,8 +8,10 @@
 
 namespace Listen\LogCollector;
 
+use Elastica\Client;
 use Listen\LogCollector\Exceptions\LoggerException;
 use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\ElasticSearchHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger as MLogger;
@@ -81,11 +83,11 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $channel
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setChannel(string $channel)
     {
@@ -96,11 +98,11 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $path
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setFile(string $path)
     {
@@ -111,11 +113,11 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $level
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setLevel(string $level)
     {
@@ -126,11 +128,11 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $mode
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setMode(string $mode = 'single')
     {
@@ -141,11 +143,11 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param int $num
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setMaxFileNum(int $num)
     {
@@ -156,11 +158,11 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param string $formater
      *
      * @return $this
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function setLineFormater(string $formater)
     {
@@ -171,9 +173,9 @@ class Logger
 
     /**
      * @date   2019/1/30
+     * @param bool $bubble
      * @author <zhufengwei@aliyun.com>
      *
-     * @param bool $bubble
      */
     public function setBubble(bool $bubble)
     {
@@ -189,12 +191,16 @@ class Logger
         $rotate = new RotatingFileHandler($this->file, $this->maxFileNum, $this->level, $this->bubble);
         $rotate->setFormatter($this->lineFormatter);
         $this->mlogger->pushHandler($rotate);
+
+        return $this;
     }
 
     /**
-     * @date   2019/1/30
+     * @date   2019-05-07
+     * @throws LoggerException
+     * @throws \Exception                If a missing directory is not buildable
+     * @throws \InvalidArgumentException If stream is not a resource or string
      * @author <zhufengwei@aliyun.com>
-     * @throws \Listen\LogCollector\Exceptions\LoggerException
      */
     public function makeSingleLogger()
     {
@@ -203,13 +209,30 @@ class Logger
         }
 
         $this->mlogger->pushHandler(new StreamHandler($this->file, MLogger::INFO, false));
+
+        return $this;
+    }
+
+    /**
+     * @date   2019-05-07
+     * @return $this
+     * @author <zhufengwei@aliyun.com>
+     */
+    public function makeEsLogger()
+    {
+        $esConfig      = config('logcollector.elastic', ['servers' => [['host' => 'localhost', 'port' => 9200]]]);
+        $client        = new Client($esConfig);
+        $this->mlogger = new MLogger($this->channel);
+        $this->mlogger->pushHandler(new ElasticSearchHandler($client));
+
+        return $this;
     }
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
      * @return $this
      * @throws \Listen\LogCollector\Exceptions\LoggerException
+     * @author <zhufengwei@aliyun.com>
      */
     public function make()
     {
@@ -224,8 +247,8 @@ class Logger
 
     /**
      * @date   2019/2/1
-     * @author <zhufengwei@aliyun.com>
      * @return $this
+     * @author <zhufengwei@aliyun.com>
      */
     public function resetMlogger()
     {
@@ -236,8 +259,8 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
      * @return \Monolog\Logger
+     * @author <zhufengwei@aliyun.com>
      */
     public function getMlogger()
     {
@@ -246,12 +269,12 @@ class Logger
 
     /**
      * @date   2019/1/30
-     * @author <zhufengwei@aliyun.com>
-     *
      * @param $name
      * @param $arguments
      *
      * @return mixed
+     * @author <zhufengwei@aliyun.com>
+     *
      */
     public function __call($name, $arguments)
     {

@@ -17,15 +17,23 @@
         "monolog/monolog": "*",
         "illuminate/config": "5.*",
         "illuminate/support": "5.*",
-        "webpatser/laravel-uuid": "2.*"
+        "webpatser/laravel-uuid": "2.*",
+        "ruflin/elastica": "^6.1",
+        "ext-json": "^1.5"
     },
     "autoload": {
         "psr-4": {
-            "Listen\\LogCollector\\": "src/"
+            "Listen\\LogCollector\\": "src/",
+            "Listen\\LogCollector\\Tests\\": "tests/"
         },
         "files": [
             "src/helpers.php"
         ]
     },
-    "minimum-stability": "stable"
+    "minimum-stability": "stable",
+    "require-dev": {
+        "phpunit/phpunit": "^7.5",
+        "laravel/framework": "^5.8",
+        "mockery/mockery": "^1.2"
+    }
 }
