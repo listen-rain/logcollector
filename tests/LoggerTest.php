@@ -89,12 +89,12 @@ class LoggerTest extends TestCase
      */
     public function testEsLoggerLogError()
     {
-        $name   = 'elastic';
-        $logger = new Logger($name);
-        $logger = $logger->makeEsLogger();
-
-        $logcollector = new LogCollector();
-        $logcollector->addLogger($name, $logger)->elasticError(json_encode(['message' => 'test elastic', 'title' => 'error']));
+        // $name   = 'elastic';
+        // $logger = new Logger($name);
+        // $logger = $logger->makeEsLogger();
+        //
+        // $logcollector = new LogCollector();
+        // $logcollector->addLogger($name, $logger)->elasticError(json_encode(['message' => 'test elastic', 'title' => 'error']));
 
         $this->assertTrue(true);
     }
