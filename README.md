@@ -86,7 +86,7 @@ $logCollector = LogCollector::addLogger($loggerName, $logger);
 ```
 $logCollector->event('事件日志文本'); // 等同于 $logCollector->eventInfo('...');
 $logCollector->eventError('事件日志错误');
-```
+``` 
 
 4、获取 Loogger 并记录自定义日志
 ```
@@ -99,4 +99,38 @@ $logger->pushProcessor(function ($record) {
     return $record;
 })->addError($logCollector->getPrefix());
 
+```
+
+## 使用 elastic 记录日志
+
+1、配置 elastic
+
+cat config/logcollector.php
+```
+<?php
+
+return [
+    ......
+    'elastic' => [
+        'servers' => [
+            [
+                'host' => env('ES_HOST', '127.0.0.1'),
+                'port' => env('ES_PORT', 9200)
+            ],
+            [
+                .......
+            ]
+    ]
+];
+```
+
+2、使用 elastic 记录日志示例
+
+```
+$name   = 'elastic';
+$logger = new Logger($name);
+$logger = $logger->makeEsLogger();
+
+$logcollector = new LogCollector();
+$logcollector->addLogger($name, $logger)->elasticError(json_encode(['message' => 'test elastic', 'title' => 'error']));
 ```
