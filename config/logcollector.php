@@ -44,12 +44,28 @@ return [
         ]
     ],
 
-    'elastic' => [
+    // 使用 elasticsearch 做为日志服务
+    'elastic'      => [
         'servers' => [
-            [
-                'host' => env('ES_HOST', '127.0.0.1'),
-                'port' => env('ES_PORT', 9200)
+            'servers' => [
+                [
+                    'host' => env('ES_HOST', 'localhost'),
+                    'port' => env('ES_PORT', 9200)
+                ]
             ]
+        ],
+        'options' => [
+            'index' => env('ES_INDEX', 'elastic'),
+            'type'  => env('ES_TYPE', 'record')
         ]
+    ],
+
+    // 使用 elasticsearch 做为日志服务，并在请求后一次性记录日志
+    'elasticLog'   => [
+        'log_level'    => \Monolog\Logger::INFO,
+        'hosts'        => env('ELASTIC_LOG_HOSTS', ['localhost:9200']),
+        'log_index'    => env('ELASTIC_LOG_INDEX', 'elasticLog'),
+        'log_type'     => env('ELASTIC_LOG_TYPE', 'log'),
+        'ignore_field' => env('ELASTIC_LOG_IGNORE_FIELD', ['formatted', 'context'])
     ]
 ];

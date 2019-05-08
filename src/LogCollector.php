@@ -57,7 +57,7 @@ class LogCollector
      */
     public function setBaseInfo($product, $serviceName)
     {
-        $this->prefix = $product . "." . $serviceName;
+        $this->prefix = $product . "." . $serviceName . ": ";
 
         return $this;
     }
@@ -250,7 +250,6 @@ class LogCollector
         $logger->pushProcessor(function ($record) use ($arguments) {
             $record['extra'] = array_merge(
                 $this->logInfos,
-                $this->formatArguments($arguments),
                 [
                     'clientIp'  => static::getClientIp(),
                     'requestId' => (string)Uuid::generate(4),
@@ -261,7 +260,7 @@ class LogCollector
             return $record;
         });
 
-        $logger->$level($this->prefix);
+        $logger->$level($this->prefix . $this->formatArguments($arguments));
         $logger->popProcessor();
         $this->initLogInfo();
 
@@ -291,8 +290,11 @@ class LogCollector
      */
     private static function getClientIp()
     {
-        $uip = '0.0.0.0';
+        if (function_exists('request') && class_exists('request')) {
+            return request()->getClientIp();
+        }
 
+        $uip = '0.0.0.0';
         if (getenv('HTTP_CLIENT_IP') && strcasecmp(getenv('HTTP_CLIENT_IP'), 'unknown')) {
             $uip = getenv('HTTP_CLIENT_IP');
         } else if (getenv('HTTP_X_FORWARDED_FOR') && strcasecmp(getenv('HTTP_X_FORWARDED_FOR'), 'unknown')) {
@@ -358,18 +360,9 @@ class LogCollector
     public function formatArguments(array $arguments)
     {
         try {
-            $content = current($arguments);
-            if (is_string($content)) {
-                $arguments = ['message' => $content];
-            }
-
-            if (is_array($content)) {
-                $arguments = (array)$content;
-            }
+            return json_encode(current($arguments));
         } catch (\Exception $e) {
-
+            return '记录日志出错：' . $e->getMessage();
         }
-
-        return $arguments;
     }
 }

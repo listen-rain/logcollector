@@ -10,6 +10,7 @@ namespace Listen\LogCollector;
 
 use Elastica\Client;
 use Listen\LogCollector\Exceptions\LoggerException;
+use Listen\LogCollector\Handlers\ElasticLogHandler;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\ElasticSearchHandler;
 use Monolog\Handler\RotatingFileHandler;
@@ -220,10 +221,27 @@ class Logger
      */
     public function makeEsLogger()
     {
-        $esConfig      = config('logcollector.elastic', ['servers' => [['host' => 'localhost', 'port' => 9200]]]);
+        $esConfig      = (array)config('logcollector.elastic.servers', ['servers' => [['host' => 'localhost', 'port' => 9200]]]);
         $client        = new Client($esConfig);
         $this->mlogger = new MLogger($this->channel);
-        $this->mlogger->pushHandler(new ElasticSearchHandler($client));
+        $this->mlogger->pushHandler(new ElasticSearchHandler($client, (array)config('logcollector.elastic.options')));
+
+        return $this;
+    }
+
+    /**
+     * @date   2019-05-08
+     * @return $this
+     * @author <zhufengwei@aliyun.com>
+     */
+    public function makeElasticLogLogger()
+    {
+        $this->mlogger = new MLogger($this->channel);
+        $level         = in_array(intval($this->level), [MLogger::INFO, MLogger::DEBUG, MLogger::ERROR, MLogger::NOTICE, MLogger::WARNING])
+            ? intval($this->level)
+            : config('logcollector.elasticLog.log_level', MLogger::INFO);
+
+        $this->mlogger->pushHandler(new ElasticLogHandler($level));
 
         return $this;
     }

@@ -8,15 +8,20 @@
 
 use Illuminate\Config\Repository;
 use Illuminate\Foundation\Application;
+use Illuminate\Log\LogManager;
 
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = new Application(__DIR__ . '/../');
 
-$app->singleton('config', function ($app) {
+$app->singleton('config', function () {
     $config = new Repository();
     $config->set('logcollector', require __DIR__ . '/../config/logcollector.php');
 
     return $config;
+});
+
+$app->singleton('log', function () use ($app) {
+    return new LogManager($app);
 });
 

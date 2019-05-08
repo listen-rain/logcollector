@@ -9,8 +9,8 @@
 namespace Listen\LogCollector\Tests;
 
 use Listen\LogCollector\LogCollector;
-use Listen\LogCollector\LogCollectorServiceProvider;
 use Listen\LogCollector\Logger;
+use Listen\LogCollector\Providers\LogCollectorServiceProvider;
 use PHPUnit\Framework\TestCase;
 
 class LoggerTest extends TestCase
@@ -67,8 +67,8 @@ class LoggerTest extends TestCase
 
     /**
      * @date   2019-05-07
-     * @author <zhufengwei@aliyun.com>
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
      */
     public function testMakeEsLogger()
     {
@@ -77,24 +77,24 @@ class LoggerTest extends TestCase
         $logger = $logger->makeEsLogger();
 
         $logcollector = new LogCollector();
-        $logcollector->addLogger($name, $logger)->elasticInfo(json_encode(['message' => 'test elastic', 'title' => 'error']));
+        $logcollector->addLogger($name, $logger)->elasticInfo(['message' => 'test elastic', 'title' => 'error']);
 
         $this->assertTrue(true);
     }
 
     /**
      * @date   2019-05-07
-     * @author <zhufengwei@aliyun.com>
      * @throws \Exception
+     * @author <zhufengwei@aliyun.com>
      */
     public function testEsLoggerLogError()
     {
-        // $name   = 'elastic';
-        // $logger = new Logger($name);
-        // $logger = $logger->makeEsLogger();
-        //
-        // $logcollector = new LogCollector();
-        // $logcollector->addLogger($name, $logger)->elasticError(json_encode(['message' => 'test elastic', 'title' => 'error']));
+        $name   = 'elastic';
+        $logger = new Logger($name);
+        $logger = $logger->makeEsLogger();
+
+        $logcollector = new LogCollector();
+        $logcollector->addLogger($name, $logger)->elasticError(['message' => 'test elastic', 'title' => 'error']);
 
         $this->assertTrue(true);
     }
