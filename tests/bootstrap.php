@@ -25,3 +25,4 @@ $app->singleton('log', function () use ($app) {
     return new LogManager($app);
 });
 
+\Illuminate\Support\Facades\Facade::setFacadeApplication($app);

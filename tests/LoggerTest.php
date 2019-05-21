@@ -8,6 +8,7 @@
 
 namespace Listen\LogCollector\Tests;
 
+use Illuminate\Support\Facades\Log;
 use Listen\LogCollector\LogCollector;
 use Listen\LogCollector\Logger;
 use Listen\LogCollector\Providers\LogCollectorServiceProvider;
