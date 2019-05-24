@@ -17,7 +17,7 @@
         "monolog/monolog": "*",
         "illuminate/config": "5.*",
         "illuminate/support": "5.*",
-        "webpatser/laravel-uuid": "2.*",
+        "webpatser/laravel-uuid": "3.*",
         "ruflin/elastica": "^6.1",
         "ext-json": "^1.5"
     },
